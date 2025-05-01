@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.nav-button {
+  position: relative;
+  overflow: hidden;
+}
+
+
+.nav-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #FE2C55;
+  transition: width 0.3s ease;
+}
+
+.nav-button.active::after {
+  width: 100%;
+}
+
+/* Tambahan styling untuk tema TikTok */
+.text-tiktok {
+  color: #FE2C55;
+}
+
+.bg-tiktok {
+  background-color: #FE2C55;
+}
+
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradientShift 15s ease infinite;
+  background-size: 400% 400%;
+}
