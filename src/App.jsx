@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiHome, FiShoppingBag, FiUser, FiLogIn, FiShoppingCart } from 'react-icons/fi';
 import './App.css';
 
-
 // Mock database
 const mockUsers = [
   {
@@ -16,15 +15,12 @@ const mockUsers = [
   }
 ];
 
-
 // Mock products:
 const mockProducts = [
   { id: 1, name: 'TikTok Merch Pack', price: 199000, description: 'Official TikTok merchandise bundle', image: 'https://via.placeholder.com/300' },
   { id: 2, name: 'Live Stream Kit', price: 599000, description: 'Professional streaming equipment set', image: 'https://via.placeholder.com/300' },
   { id: 3, name: 'Creator Course', price: 299000, description: 'Premium content creation course', image: 'https://via.placeholder.com/300' }
 ];
-
-
 
 // Main App Component:
 function App() {
@@ -60,7 +56,6 @@ function App() {
   const closeSidebar = () => setSidebarOpen(false);
 
   const handleLogin = (email, password) => {
-    // In a real app, this would be an API call
     const user = mockUsers.find(u => u.email === email && u.password === password);
     if (user) {
       setCurrentUser(user);
@@ -73,7 +68,6 @@ function App() {
   };
 
   const handleRegister = (userData) => {
-    // In a real app, this would be an API call
     const newUser = {
       ...userData,
       id: `user-${mockUsers.length + 1}`,
@@ -109,7 +103,6 @@ function App() {
       return;
     }
 
-    // Update user balance and purchases
     const updatedUser = {
       ...currentUser,
       balance: currentUser.balance - total,
@@ -189,6 +182,7 @@ function App() {
             currentUser={currentUser}
             addToCart={addToCart}
             setCurrentSection={setCurrentSection}
+            setSelectedProduct={setSelectedProduct}
             isMobile={isMobile}
             closeSidebar={closeSidebar}
           />
@@ -226,9 +220,7 @@ function App() {
   );
 }
 
-
-
-// Component: TikTok Logo:
+// TikTok Logo Component
 const TikTokLogo = () => (
   <svg viewBox="0 0 24 24" width="28" height="28" className="text-tiktok">
     <path 
@@ -238,8 +230,7 @@ const TikTokLogo = () => (
   </svg>
 );
 
-
-// Component: Dark Mode Toggle:
+// Dark Mode Toggle Component
 const DarkModeToggle = ({ darkMode, setDarkMode }) => (
   <button 
     onClick={() => setDarkMode(!darkMode)}
@@ -251,7 +242,7 @@ const DarkModeToggle = ({ darkMode, setDarkMode }) => (
   </button>
 );
 
-// Component: Nav Buttons
+// Nav Buttons Component
 const NavButtons = ({ currentSection, setCurrentSection, currentUser }) => (
   <nav className="flex gap-2">
     <button 
@@ -302,8 +293,7 @@ const NavButtons = ({ currentSection, setCurrentSection, currentUser }) => (
   </nav>
 );
 
-
-// Component: Cart Indicator:
+// Cart Indicator Component
 const CartIndicator = ({ cart, setCurrentSection }) => (
   <button 
     onClick={() => setCurrentSection('cart')}
@@ -318,7 +308,7 @@ const CartIndicator = ({ cart, setCurrentSection }) => (
   </button>
 );
 
-// Component: Sidebar
+// Sidebar Component
 const Sidebar = ({ isOpen, closeSidebar, currentSection, setCurrentSection, currentUser }) => {
   const navItems = [
     { id: 'home', label: 'Home', icon: <FiHome /> },
@@ -371,9 +361,7 @@ const Sidebar = ({ isOpen, closeSidebar, currentSection, setCurrentSection, curr
   );
 };
 
-
-
-// Page: Home:
+// Home Page Component
 const HomePage = ({ darkMode, products }) => {
   const [bgIndex, setBgIndex] = useState(0);
   
@@ -436,9 +424,7 @@ const HomePage = ({ darkMode, products }) => {
   );
 };
 
-
-
-// Page: Auth (Login/Register)
+// Auth Page Component
 const AuthPage = ({ onLogin, onRegister, isMobile, closeSidebar }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -461,10 +447,16 @@ const AuthPage = ({ onLogin, onRegister, isMobile, closeSidebar }) => {
         if (!success) setError('Registration failed');
       }
     } catch (err) {
+
+      console.error(err);
       setError('An error occurred. Please try again.');
     }
   };
 
+
+  useEffect(() => {
+    if (isMobile) closeSidebar();
+  }, [isMobile, closeSidebar]);
   return (
     <section className="text-gray-900 dark:text-white animate-fadeIn">
       <div className="max-w-md mx-auto my-12 p-8 bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-lg">
@@ -547,11 +539,10 @@ const AuthPage = ({ onLogin, onRegister, isMobile, closeSidebar }) => {
   );
 };
 
-
-
-// Page: Products
-const ProductsPage = ({ products, currentUser, addToCart, setCurrentSection, isMobile, closeSidebar }) => {
+// Products Page Component
+const ProductsPage = ({ products, currentUser, addToCart, setCurrentSection, setSelectedProduct, isMobile, closeSidebar }) => {
   const viewProductDetail = (product) => {
+    setSelectedProduct(product);
     setCurrentSection('productDetail');
     if (isMobile) closeSidebar();
   };
@@ -595,10 +586,7 @@ const ProductsPage = ({ products, currentUser, addToCart, setCurrentSection, isM
   );
 };
 
-
-
-
-// Page: Product Detail
+// Product Detail Page Component
 const ProductDetailPage = ({ product, currentUser, addToCart, setCurrentSection, isMobile, closeSidebar }) => {
   const goBack = () => {
     setCurrentSection('products');
@@ -655,60 +643,129 @@ const ProductDetailPage = ({ product, currentUser, addToCart, setCurrentSection,
 
 
 
-
-
-// Page: Profile
+// Profile Page Component
 const ProfilePage = ({ user, isMobile, closeSidebar, handleLogout }) => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+
+  useEffect(() => {
+    if (isMobile) closeSidebar();
+  }, [isMobile, closeSidebar]);
+
+  // Handle case when user data is not available
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <FiUser className="mx-auto text-4xl text-red-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+            Sesi Tidak Valid
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Data pengguna tidak tersedia. Silakan login kembali.
+          </p>
+          <button
+            onClick={() => {
+              handleLogout?.();
+              window.location.hash = "#login";
+            }}
+            className="bg-tiktok text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-opacity"
+          >
+            <FiLogIn className="inline mr-2" />
+            Ke Halaman Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Rest of the component...
+
+
+
+  const formatDate = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  };
+
+  const handlePurchaseClick = (purchase) => {
+    setSelectedPurchase(purchase);
+  };
+
+  const closePurchaseDetail = () => {
+    setSelectedPurchase(null);
+  };
+
   return (
     <section className="text-gray-900 dark:text-white animate-fadeIn">
       <div className="max-w-4xl mx-auto py-12 px-4">
-        <h2 className="text-4xl font-bold mb-8 text-center">User Profile</h2>
+        <h2 className="text-4xl font-bold mb-8 text-center">Profil Pengguna</h2>
         
         <div className="bg-gray-100 dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+          {/* Profile Header */}
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-            <div className="w-20 h-20 rounded-full bg-tiktok flex items-center justify-center text-white text-2xl">
+            <div className="w-20 h-20 rounded-full bg-tiktok flex items-center justify-center text-white text-2xl shadow-lg">
               {user.name.split(' ').map(n => n[0]).join('')}
             </div>
             <div className="text-center md:text-left">
               <h3 className="text-2xl font-bold">{user.name}</h3>
-              <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
-              <p className="text-tiktok font-medium mt-2">
-                Balance: Rp {user.balance.toLocaleString()}
-              </p>
+              <p className="text-gray-600 dark:text-gray-300 break-all">{user.email}</p>
+              <div className="mt-2 bg-tiktok/10 text-tiktok px-4 py-2 rounded-full inline-block">
+                Saldo: Rp {user.balance.toLocaleString('id-ID')}
+              </div>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                Member since: {new Date(user.created_at).toLocaleDateString()}
+                Bergabung pada: {formatDate(user.created_at)}
               </p>
             </div>
           </div>
 
+          {/* Purchase History */}
           <div className="space-y-6">
             <div>
-              <h4 className="text-xl font-bold mb-4 text-tiktok">Purchase History</h4>
+              <h4 className="text-xl font-bold mb-4 text-tiktok flex items-center gap-2">
+                <FiShoppingBag />
+                Riwayat Transaksi
+              </h4>
               
               {user.purchases.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">
-                  No purchases yet
-                </p>
+                <div className="text-center py-8 bg-white dark:bg-gray-700 rounded-lg">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Belum ada transaksi
+                  </p>
+                  <button
+                    onClick={() => window.location.hash = "#products"}
+                    className="bg-tiktok text-white px-4 py-2 rounded-lg hover:bg-opacity-90"
+                  >
+                    Lihat Produk
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {user.purchases.map(purchase => (
                     <div 
-                      key={purchase.id} 
-                      className="bg-white dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-shadow"
+                      key={purchase.id}
+                      className="bg-white dark:bg-gray-700 p-4 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handlePurchaseClick(purchase)}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-bold">Order #{purchase.id}</p>
+                          <p className="font-bold">Order #{purchase.id.slice(-6)}</p>
                           <p className="text-gray-600 dark:text-gray-300 mt-1">
-                            {purchase.products?.length || 0} items
+                            {purchase.products?.length || 0} item
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-500">
-                            {new Date(purchase.date).toLocaleDateString()}
+                            {formatDate(purchase.date)}
                           </p>
                           <p className="text-tiktok font-medium">
-                            Rp {purchase.total.toLocaleString()}
+                            Rp {purchase.total.toLocaleString('id-ID')}
                           </p>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             purchase.status === 'completed' 
@@ -725,23 +782,100 @@ const ProfilePage = ({ user, isMobile, closeSidebar, handleLogout }) => {
               )}
             </div>
 
-            <button 
-              onClick={handleLogout}
-              className="w-full bg-tiktok text-white py-3 rounded-lg hover:bg-opacity-90 transition-colors font-medium"
-            >
-              Logout
-            </button>
+            {/* Logout Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <button 
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 py-3 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <FiLogOut />
+                Keluar Akun
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4">Konfirmasi Logout</h3>
+              <p className="mb-6">Anda yakin ingin keluar dari akun ini?</p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Ya, Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Purchase Detail Modal */}
+        {selectedPurchase && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold">Detail Transaksi</h3>
+                <button
+                  onClick={closePurchaseDetail}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium">ID Transaksi:</p>
+                  <p className="text-gray-600 dark:text-gray-300">{selectedPurchase.id}</p>
+                </div>
+                
+                <div>
+                  <p className="font-medium">Total:</p>
+                  <p className="text-tiktok">Rp {selectedPurchase.total.toLocaleString('id-ID')}</p>
+                </div>
+                
+                <div>
+                  <p className="font-medium">Tanggal:</p>
+                  <p className="text-gray-600 dark:text-gray-300">{formatDate(selectedPurchase.date)}</p>
+                </div>
+                
+                <div>
+                  <p className="font-medium mb-2">Produk:</p>
+                  <div className="space-y-2">
+                    {selectedPurchase.products?.map((product, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                        <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            Rp {product.price.toLocaleString('id-ID')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
 
-
-
-// Page: Cart
+// Cart Page Component
 const CartPage = ({ cart, currentUser, purchaseItems, setCurrentSection, isMobile, closeSidebar }) => {
   const goBack = () => {
     setCurrentSection('products');
@@ -775,8 +909,8 @@ const CartPage = ({ cart, currentUser, purchaseItems, setCurrentSection, isMobil
         ) : (
           <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl">
             <div className="space-y-4 mb-6">
-              {cart.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 p-4 bg-white dark:bg-gray-700 rounded-lg">
+              {cart.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 p-4 bg-white dark:bg-gray-700 rounded-lg">
                   <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded"/>
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
